@@ -15,10 +15,12 @@ import (
 )
 
 type Config struct {
-	Disk struct {
-		Thresholds []Threshold `json:"thresholds"`
-	} `json:"disk"`
-	WebhookUrl string `json:"webhook"`
+	Disk       DiskCheckConfig `json:"disk"`
+	WebhookUrl string          `json:"webhook"`
+}
+
+type DiskCheckConfig struct {
+	Thresholds []Threshold `json:"thresholds"`
 }
 
 type Threshold struct {
@@ -113,16 +115,14 @@ func readConfig(configFilePath string) (Config, error) {
 	file, err := os.ReadFile(configFilePath)
 
 	if err != nil {
-		slog.Error("couldnot ", "err", err)
-		return Config{}, err
+		return Config{}, fmt.Errorf("cannot open config file: %w", err)
 	}
 
 	var config Config
 	err = json.Unmarshal(file, &config)
 
 	if err != nil {
-		slog.Error("couldnot ", "err", err)
-		return Config{}, err
+		return Config{}, fmt.Errorf("cannot parse config file: %w", err)
 	}
 
 	return config, nil
@@ -150,7 +150,8 @@ func main() {
 	}
 
 	if len(lines) > 0 {
-		err := sendMessage(strings.Join(lines, "\n"), config)
+		message := strings.Join(lines, "\n")
+		err := sendMessage(message, config)
 		if err != nil {
 			panic(fmt.Sprintf("sending message failed: %v", err))
 		}
