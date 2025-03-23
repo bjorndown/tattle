@@ -64,6 +64,9 @@ func Test_readConfig(t *testing.T) {
       }
     ]
   },
+  "systemd": {
+    "activeUnits": ["foo.service"]
+  },
   "webhook": "https://some.com/webhook"
 }`)
 
@@ -85,6 +88,22 @@ func Test_readConfig(t *testing.T) {
 				},
 			},
 		},
+		Systemd:    SystemdCheckConfig{ActiveUnits: []string{"foo.service"}},
 		WebhookUrl: "https://some.com/webhook",
 	})
+}
+
+func Test_parseSystemctlOutput(t *testing.T) {
+	output, err := parseSystemCtlOutput("ActiveState=active", "foo.service")
+
+	require.Nil(t, err)
+	require.Equal(t, output, SystemdUnitState{
+		name:  "foo.service",
+		state: "active",
+	})
+}
+
+func Test_parseSystemctlOutputError(t *testing.T) {
+	_, err := parseSystemCtlOutput("OtherThing=foo", "foo.service")
+	require.NotNil(t, err)
 }
