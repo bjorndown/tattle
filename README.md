@@ -14,6 +14,11 @@ go build
 ./tattle
 ```
 
+## Help 
+
+```shell
+./tattle --help
+```
 
 ## Config file
 

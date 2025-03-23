@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -33,6 +34,11 @@ const (
 )
 
 var matchMoreThanTwoSpaces = regexp.MustCompile(" {2,}")
+var configFilePath string
+
+func init() {
+	flag.StringVar(&configFilePath, "config", "./config.json", "path to config file")
+}
 
 func CheckDiskSpace(config Config) (map[Status][]Threshold, error) {
 	cmd := exec.Command("df", "--output=target,pcent")
@@ -103,8 +109,8 @@ func sendMessage(text string, config Config) error {
 	return nil
 }
 
-func readConfig() (Config, error) {
-	file, err := os.ReadFile("config.json")
+func readConfig(configFilePath string) (Config, error) {
+	file, err := os.ReadFile(configFilePath)
 
 	if err != nil {
 		slog.Error("couldnot ", "err", err)
@@ -123,7 +129,9 @@ func readConfig() (Config, error) {
 }
 
 func main() {
-	config, err := readConfig()
+	flag.Parse()
+
+	config, err := readConfig(configFilePath)
 
 	if err != nil {
 		panic(err)
