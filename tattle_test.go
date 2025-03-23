@@ -1,43 +1,14 @@
 package main
 
 import (
+	"github.com/bjorndown/tattle/internal/disk"
+	"github.com/bjorndown/tattle/internal/systemd"
 	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"path"
 	"testing"
 )
-
-func Test_parseDfOutput(t *testing.T) {
-	dfOutput := `Mounted on                                                                                           Use%
-/                                                                                                     69%
-/dev                                                                                                   0%
-/dev/shm                                                                                               1%
-/boot                                                                            50%
-/run                                                                                                   1%
-`
-
-	result := parseDfOutput(dfOutput)
-
-	require.Equal(t, result, []Threshold{
-		{
-			Target:  "/",
-			Percent: 69,
-		}, {
-			Target:  "/dev",
-			Percent: 0,
-		}, {
-			Target:  "/dev/shm",
-			Percent: 1,
-		}, {
-			Target:  "/boot",
-			Percent: 50,
-		}, {
-			Target:  "/run",
-			Percent: 1,
-		},
-	})
-}
 
 func createConfigFile(t *testing.T, content string) (string, error) {
 	tempDir := t.TempDir()
@@ -77,8 +48,8 @@ func Test_readConfig(t *testing.T) {
 	require.Nil(t, err)
 
 	require.Equal(t, config, Config{
-		Disk: DiskCheckConfig{
-			Thresholds: []Threshold{
+		Disk: disk.CheckConfig{
+			Thresholds: []disk.Threshold{
 				{
 					Target:  "/",
 					Percent: 69,
@@ -88,22 +59,7 @@ func Test_readConfig(t *testing.T) {
 				},
 			},
 		},
-		Systemd:    SystemdCheckConfig{ActiveUnits: []string{"foo.service"}},
+		Systemd:    systemd.CheckConfig{ActiveUnits: []string{"foo.service"}},
 		WebhookUrl: "https://some.com/webhook",
 	})
-}
-
-func Test_parseSystemctlOutput(t *testing.T) {
-	output, err := parseSystemCtlOutput("ActiveState=active", "foo.service")
-
-	require.Nil(t, err)
-	require.Equal(t, output, SystemdUnitState{
-		name:  "foo.service",
-		state: "active",
-	})
-}
-
-func Test_parseSystemctlOutputError(t *testing.T) {
-	_, err := parseSystemCtlOutput("OtherThing=foo", "foo.service")
-	require.NotNil(t, err)
 }

@@ -1,4 +1,4 @@
-module tattle
+module github.com/bjorndown/tattle
 
 go 1.23
 
